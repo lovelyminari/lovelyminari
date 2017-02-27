@@ -5,6 +5,7 @@ python 2 version
 from collections import Counter
 import nltk
 import operator
+
 from summa import keywords
 
 test = '''
@@ -13,10 +14,8 @@ I'm here today to talk to you about a very powerful little word, one that people
 
 token = nltk.word_tokenize(test)
 
-
 # Calculate term frequency
 counter = Counter(token).most_common()
-
 
 # keeping order of words in text, store term frequency
 aaa = list(token)
@@ -340,22 +339,39 @@ for element in sortedByFrequency:
     else:
         selectedKeywords.append(element)
 
-print 'Selected Keywords 1 : ', selectedKeywords
+print 'Selected Keywords 1 (Freqeuncy order) : ', len(selectedKeywords), selectedKeywords
+print 'Selected Keywords 1 (Importance order) : ', len(selectedKeywords), sorted(selectedKeywords, key=operator.itemgetter(3), reverse=True)
 
 # importance * freqeuncy
-weightedKeywords = []
+def weight_keywords(keyword_list):
+    weightedKeywords = []
+    for element in keyword_list:
+        weightedImpt = element[1] * element[3]
+        weightedKeywords.append([element[0], weightedImpt])
+
+    weightedKeywords.sort(key=operator.itemgetter(1), reverse=True)
+
+    return weightedKeywords
+
+weightedKeywords = weight_keywords(sortedByFrequency)
+print 'Weighted Importance Keywords : ', len(weightedKeywords), weightedKeywords
+
+# Normalizing the frequencies.
+NormalizedKeywords = []
+n = [x[1] for x in sortedByFrequency]
+max = max(n)
 for element in sortedByFrequency:
-    weightedImpt = element[1] * element[3]
-    weightedKeywords.append([element[0], weightedImpt])
+    normalizing = float(element[1])/float(max)
+    NormalizedKeywords.append([element[0], normalizing, element[2], element[3]])
+print 'Normalized Frequency : ', len(NormalizedKeywords), NormalizedKeywords
 
-weightedKeywords.sort(key=operator.itemgetter(1), reverse=True)
+weightedKeywords = weight_keywords(NormalizedKeywords)
+print 'Weighting Normalized Keywords : ', len(weightedKeywords), weightedKeywords
 
-print 'Weighted Importance Keywords : ', weightedKeywords
-
-# Selecting keywords 2 - selecting data whose importance is more than 0.05. *fail!!!!!!!!*
+# Selecting keywords 2 - selecting data whose importance is more than 0.05.
 selectedKeywords = []
 for element in weightedKeywords:
-    if element[1] > 0.05:
+    if element[1] >= 0.01:
         selectedKeywords.append(element)
 
 print 'Selected Keywords 2 : ', len(selectedKeywords), selectedKeywords
